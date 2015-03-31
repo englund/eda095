@@ -1,7 +1,9 @@
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -53,12 +55,17 @@ public class Downloader {
     public void downloadToPath(File dir, String link) throws IOException {
         File file = new File(dir, parseFilename(link));
         if(!file.exists()) {
-            file.createNewFile();
             URL url = new URL(link);
-            ReadableByteChannel channel = Channels.newChannel(url.openStream());
-            FileOutputStream stream = new FileOutputStream(file);
-            stream.getChannel().transferFrom(channel, 0, Long.MAX_VALUE);
-            stream.close();
+            BufferedInputStream in = new BufferedInputStream(url.openStream());
+            FileOutputStream out = new FileOutputStream(file);
+            byte[] buffer = new byte[8192];
+            int offset = 0;
+            while ((offset = in.read(buffer, 0, buffer.length)) > 0) {
+            	out.write(buffer, 0, offset);
+            }
+            out.flush();
+            out.close();
+            in.close();
         } else {
             throw new FileAlreadyExistsException(file.getPath());
         }
