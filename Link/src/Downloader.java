@@ -1,16 +1,12 @@
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.nio.channels.Channels;
-import java.nio.channels.ReadableByteChannel;
-import java.nio.file.FileAlreadyExistsException;
 import java.util.ArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -52,25 +48,6 @@ public class Downloader {
         return pdfUrls;
     }
 
-    public void downloadToPath(File dir, String link) throws IOException {
-        File file = new File(dir, parseFilename(link));
-        if(!file.exists()) {
-            URL url = new URL(link);
-            BufferedInputStream in = new BufferedInputStream(url.openStream());
-            FileOutputStream out = new FileOutputStream(file);
-            byte[] buffer = new byte[8192];
-            int offset = 0;
-            while ((offset = in.read(buffer, 0, buffer.length)) > 0) {
-            	out.write(buffer, 0, offset);
-            }
-            out.flush();
-            out.close();
-            in.close();
-        } else {
-            throw new FileAlreadyExistsException(file.getPath());
-        }
-    }
-
     private String downloadHtml() throws IOException {
         InputStreamReader stream = new InputStreamReader(getUrl().openStream());
         BufferedReader in = new BufferedReader(stream);
@@ -80,10 +57,6 @@ public class Downloader {
         }
         in.close();
         return html;
-    }
-
-    private String parseFilename(String link) {
-        return link.substring(link.lastIndexOf('/') + 1, link.length());
     }
 
     public static void main(String[] args) {
@@ -116,17 +89,15 @@ public class Downloader {
             System.out.println("Could not download HTML from " + url);
             System.exit(1);
         }
-
+        
+        ExecutorService pool = Executors.newFixedThreadPool(5);
         ArrayList<String> pdfLinks = downloader.getPDFLinks();
         for (String pdfLink : pdfLinks) {
             try {
-                System.out.println("Downloading " + pdfLink + " to " + path);
-                downloader.downloadToPath(path, pdfLink);
-            } catch (FileAlreadyExistsException e) {
-                System.out.println("File already exists " + e.getFile());
-            } catch (IOException e) {
-                System.out.println("Could not download " + pdfLink);
-            }
+            	pool.submit(new ThreadedDownload(path, pdfLink));
+			} catch (MalformedURLException e) {
+				e.printStackTrace();
+			}
         }
     }
 }
