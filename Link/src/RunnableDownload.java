@@ -1,10 +1,10 @@
 import java.io.File;
 import java.net.MalformedURLException;
 
-public class ThreadedDownload extends Thread  {
+public class RunnableDownload implements Runnable {
 	PDFDownloader pdfdownloader;
 	
-	ThreadedDownload(File dir, String link) throws MalformedURLException {
+	RunnableDownload(File dir, String link) throws MalformedURLException {
 		pdfdownloader = new PDFDownloader(dir, link);
 	}
 	
