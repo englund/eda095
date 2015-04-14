@@ -25,28 +25,47 @@ public class ClientConnection extends Thread {
 	}
 
 	public void run() {
+		// * ska kunna ta emot text-baserade kommandon:
+		//     - 'M: Content of the message' to send a message to all the participants
+		//     - 'E: Content of the message' to echo the message to the user for testing purposes
+		//     - 'Q:' to disconnect
 		try {
 			String line;
             while ((line = input.readLine()) != null) {
-            	this.chat.postMessage(line);
+            	char command = line.charAt(0);
+        		switch (command) {
+        		case 'M':
+        			this.chat.postMessage(line.substring(3));
+        			break;
+        		case 'E':
+        			this.postMessage(line.substring(3));
+        			break;
+        		case 'Q':
+        			this.closeConnection();
+        			break;
+        		}
             }
 		} catch (IOException e) {
 			e.printStackTrace();
 		} finally {
 			System.out.println(String.format("Closing connection: %s:%d",
 					socket.getInetAddress(), socket.getPort()));
-			try {
-				this.output.close();
-				this.input.close();
-				this.socket.close();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
+			closeConnection();
+		}
+	}
+
+	private void closeConnection() {
+		try {
+			this.output.close();
+			this.input.close();
+			this.socket.close();
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 	}
 
 	public void postMessage(String message) {
-		output.write(message);
+		output.write(String.format("%s\r\n", message));
 		output.flush();
 	}
 

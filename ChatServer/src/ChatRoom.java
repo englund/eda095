@@ -15,8 +15,11 @@ public class ChatRoom {
 	}
 	
 	public synchronized void postMessage(String message) {
+		// * borde inte skicka till sig själv.
+		// * enligt labbmanual borde vi använda en mailbox-klass
+		// * mailbox borde använda wait() och notifyAll() enl. labbmanual
 		for (ClientConnection connection : this.connections) {
-			connection.postMessage(String.format("%s\r\n", message));
+			connection.postMessage(message);
 		}
 	}
 	
