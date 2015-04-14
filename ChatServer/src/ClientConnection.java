@@ -9,10 +9,10 @@ public class ClientConnection extends Thread {
 	private PrintWriter output;
 	private BufferedReader input;
 	private Socket socket;
-	private ChatRoom chat;
+	private Mailbox mailbox;
 
-	public ClientConnection(ChatRoom chat, Socket socket) {
-		this.chat = chat;
+	public ClientConnection(Mailbox mailbox, Socket socket) {
+		this.mailbox = mailbox;
 		try {
 			this.socket = socket;
 			this.input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
@@ -35,7 +35,7 @@ public class ClientConnection extends Thread {
             	char command = line.charAt(0);
         		switch (command) {
         		case 'M':
-        			this.chat.postMessage(line.substring(3));
+        			this.mailbox.post(line.substring(3));
         			break;
         		case 'E':
         			this.postMessage(line.substring(3));
